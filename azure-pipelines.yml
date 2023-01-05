@@ -13,7 +13,7 @@ trigger:
 variables:
 - group: dep-adb-demo
 - name: isDev
-  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/develop')]
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
 pool:
   vmImage: 'windows-latest'
