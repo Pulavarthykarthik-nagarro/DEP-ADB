@@ -33,9 +33,7 @@ stages:
         
 
         steps:
-          - powershell: |
-              tree "$(publishDirectory)" /F
-            displayName: 'Treeview of publishDirectory'
+
           - task: UniversalPackages@0
             #condition: eq(variables.isDev, true)
             displayName: "Publishing to AzDO Artifacts in Dev"
