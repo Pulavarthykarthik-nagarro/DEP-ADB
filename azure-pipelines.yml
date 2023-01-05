@@ -142,8 +142,8 @@ stages:
             displayName: 'Downloading latest Databricks Artifact'
             inputs:
               command: 'download'
-              vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-prod)'
-              vstsFeedPackage: '$(feedname-prod)'
+              vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
+              vstsFeedPackage: '$(feedname-qa)'
               vstsPackageVersion: '*'
               downloadDirectory: '$(Build.SourcesDirectory)/$(publishDirectory)'
               verbosity: 'Debug'
