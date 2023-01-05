@@ -1,0 +1,175 @@
+trigger:
+  branches:
+    include:
+    - main
+ 
+
+  paths:
+    include:
+    - 'notebooks/*'
+    exclude:
+    - 'azure-pipelines.yml'
+
+variables:
+- group: adb-monorepo
+- name: isDev
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/develop')]
+- name: isMain
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+pool:
+  vmImage: 'windows-latest'
+
+#########################
+#BUILD STAGE FOR ADB
+#########################
+
+stages:
+  - stage: Build_ADB
+    condition: eq(variables.isDev, true)
+    displayName: Building databricks notebook Artifact in Dev 
+    jobs:
+      
+      - job: Creating
+        displayName: "Creating Artifact in Dev"
+        
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - powershell: |
+              tree "$(publishDirectory)" /F
+            displayName: 'Treeview of publishDirectory'
+          - task: UniversalPackages@0
+            #condition: eq(variables.isDev, true)
+            displayName: "Publishing to AzDO Artifacts in Dev"
+            inputs:
+             command: publish
+             publishDirectory: '$(publishDirectory)'
+             vstsFeedPublish: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
+             vstsFeedPackagePublish: '$(feedname-qa)'
+             packagePublishDescription: 'Databricks notebooks in QA'
+             verbosity: 'Debug'
+             versionOption: 'patch'
+
+
+
+
+###################
+#RELEASE STAGE in QA Env
+###################  
+
+  - stage: ADB_DEV_Release
+    displayName: Deploying databricks notebook in QA
+    dependsOn: Build_ADB
+    #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    condition: succeeded('Build_ADB')
+    jobs:
+      - job:
+        displayName: "Deploying to QA"
+        pool:
+          vmImage: 'windows-latest'
+        # environment: daa-dev
+        # strategy:
+        #   runOnce:
+        #     deploy:
+        steps:
+          - task: UniversalPackages@0
+            displayName: 'Downloading latest Databricks Artifact'
+            inputs:
+              command: 'download'
+              vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
+              vstsFeedPackage: '$(feedname-qa)'
+              vstsPackageVersion: '*'
+              downloadDirectory: '$(Build.SourcesDirectory)/$(publishDirectory)'
+              verbosity: 'Debug'
+          - powershell: |
+              tree "$(Build.SourcesDirectory)/$(publishDirectory)" /F
+            displayName: 'Treeview of Build.SourcesDirectory'
+          
+          - task: AzureKeyVault@1
+            inputs:
+              ConnectedServiceName: '$(ConnectedServiceName)'
+              #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
+              KeyVaultName: '$(keyvaultname)'
+              SecretsFilter: '*'
+              runAsPreJob: false
+          - task: databricksDeployScripts@0
+            inputs:
+              authMethod: 'bearer'
+              bearerToken: $(tokenname_qa)
+              region: '$(region)'
+              #localPath: '$(Pipeline.Workspace)/ADB_Artifact/src'
+              localPath: '$(Build.SourcesDirectory)/$(publishDirectory)'
+              databricksPath: '/notebook'
+              clean: true        
+
+
+  
+  - stage:  Approve_Deployment_Prod
+    displayName: Approval to Deploy to PROD Stage
+    dependsOn: Build_ADF_Prod
+    condition: succeeded('Build_ADF_Prod')
+    jobs:
+    - job: waitForValidation
+      displayName: Wait for external validation
+      pool: server
+      timeoutInMinutes: 4320 # job times out in 3 days
+      steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 4320 # task times out in 3 days
+          inputs:
+           notifyUsers: |
+            $(notifyUsers)
+           instructions: 'Please validate the PROD build configuration'
+           onTimeout: 'reject'
+
+
+
+###################
+#RELEASE STAGE in Prod Env
+###################  
+
+  - stage: ADB_DEV_Release
+    displayName: Deploying databricks notebook in Prod
+    dependsOn: Build_ADB_Prod
+    condition: and(succeeded('Approve_Deployment_Prod'),succeeded('Build_ADF_Prod'))
+    # condition: succeeded('Build_ADB_Prod')
+    jobs:
+      - job:
+        displayName: "Deploying to Prod"
+        pool:
+          vmImage: 'windows-latest'
+        # environment: daa-dev
+        # strategy:
+        #   runOnce:
+        #     deploy:
+        steps:
+          - task: UniversalPackages@0
+            displayName: 'Downloading latest Databricks Artifact'
+            inputs:
+              command: 'download'
+              vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-prod)'
+              vstsFeedPackage: '$(feedname-prod)'
+              vstsPackageVersion: '*'
+              downloadDirectory: '$(Build.SourcesDirectory)/$(publishDirectory)'
+              verbosity: 'Debug'
+          - powershell: |
+              tree "$(Build.SourcesDirectory)/$(publishDirectory)" /F
+            displayName: 'Treeview of Build.SourcesDirectory'
+          
+          - task: AzureKeyVault@1
+            inputs:
+              ConnectedServiceName: '$(ConnectedServiceName)'
+              #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
+              KeyVaultName: '$(keyvaultname)'
+              SecretsFilter: '*'
+              runAsPreJob: false
+          - task: databricksDeployScripts@0
+            inputs:
+              authMethod: 'bearer'
+              bearerToken: $(tokenname_prod)
+              region: '$(region)'
+              #localPath: '$(Pipeline.Workspace)/ADB_Artifact/src'
+              localPath: '$(Build.SourcesDirectory)/$(publishDirectory)'
+              databricksPath: '/notebook'
+              clean: true 
