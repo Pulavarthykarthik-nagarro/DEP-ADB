@@ -11,11 +11,9 @@ trigger:
     - 'azure-pipelines.yml'
 
 variables:
-- group: adb-monorepo
+- group: dep-adb-demo
 - name: isDev
   value: $[eq(variables['Build.SourceBranch'], 'refs/heads/develop')]
-- name: isMain
-  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
 pool:
   vmImage: 'windows-latest'
@@ -49,7 +47,7 @@ stages:
              vstsFeedPackagePublish: '$(feedname-qa)'
              packagePublishDescription: 'Databricks notebooks in QA'
              verbosity: 'Debug'
-             versionOption: 'patch'
+
 
 
 
@@ -58,7 +56,7 @@ stages:
 #RELEASE STAGE in QA Env
 ###################  
 
-  - stage: ADB_DEV_Release
+  - stage: ADB_QA_Release
     displayName: Deploying databricks notebook in QA
     dependsOn: Build_ADB
     #condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
@@ -86,17 +84,17 @@ stages:
               tree "$(Build.SourcesDirectory)/$(publishDirectory)" /F
             displayName: 'Treeview of Build.SourcesDirectory'
           
-          - task: AzureKeyVault@1
-            inputs:
-              ConnectedServiceName: '$(ConnectedServiceName)'
-              #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
-              KeyVaultName: '$(keyvaultname)'
-              SecretsFilter: '*'
-              runAsPreJob: false
+          # - task: AzureKeyVault@1
+          #   inputs:
+          #     ConnectedServiceName: '$(ConnectedServiceName)'
+          #     #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
+          #     KeyVaultName: '$(keyvaultname)'
+          #     SecretsFilter: '*'
+          #     runAsPreJob: false
           - task: databricksDeployScripts@0
             inputs:
               authMethod: 'bearer'
-              bearerToken: $(tokenname_qa)
+              bearerToken: 'dapiec1285f2d7e2953d083d31c22ada36fb-3'
               region: '$(region)'
               #localPath: '$(Pipeline.Workspace)/ADB_Artifact/src'
               localPath: '$(Build.SourcesDirectory)/$(publishDirectory)'
@@ -107,8 +105,8 @@ stages:
   
   - stage:  Approve_Deployment_Prod
     displayName: Approval to Deploy to PROD Stage
-    dependsOn: Build_ADF_Prod
-    condition: succeeded('Build_ADF_Prod')
+    dependsOn: ADB_QA_Release
+    condition: succeeded('ADB_QA_Release')
     jobs:
     - job: waitForValidation
       displayName: Wait for external validation
@@ -131,9 +129,9 @@ stages:
 
   - stage: ADB_DEV_Release
     displayName: Deploying databricks notebook in Prod
-    dependsOn: Build_ADB_Prod
-    condition: and(succeeded('Approve_Deployment_Prod'),succeeded('Build_ADF_Prod'))
-    # condition: succeeded('Build_ADB_Prod')
+    dependsOn: Approve_Deployment_Prod
+    # condition: and(succeeded('Approve_Deployment_Prod'),succeeded('Build_ADF_Prod'))
+    condition: succeeded('Approve_Deployment_Prod')
     jobs:
       - job:
         displayName: "Deploying to Prod"
@@ -157,17 +155,17 @@ stages:
               tree "$(Build.SourcesDirectory)/$(publishDirectory)" /F
             displayName: 'Treeview of Build.SourcesDirectory'
           
-          - task: AzureKeyVault@1
-            inputs:
-              ConnectedServiceName: '$(ConnectedServiceName)'
-              #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
-              KeyVaultName: '$(keyvaultname)'
-              SecretsFilter: '*'
-              runAsPreJob: false
+          # - task: AzureKeyVault@1
+          #   inputs:
+          #     ConnectedServiceName: '$(ConnectedServiceName)'
+          #     #azureSubscription: 'Microsoft Azure Enterprise BigDataAI'
+          #     KeyVaultName: '$(keyvaultname)'
+          #     SecretsFilter: '*'
+          #     runAsPreJob: false
           - task: databricksDeployScripts@0
             inputs:
               authMethod: 'bearer'
-              bearerToken: $(tokenname_prod)
+              bearerToken: 'dapi00c2e28a929a83abdbbb415ccbff67b0-3'
               region: '$(region)'
               #localPath: '$(Pipeline.Workspace)/ADB_Artifact/src'
               localPath: '$(Build.SourcesDirectory)/$(publishDirectory)'
