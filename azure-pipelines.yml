@@ -43,7 +43,7 @@ stages:
              vstsFeedPublish: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
              vstsFeedPackagePublish: '$(feedname-qa)'
              packagePublishDescription: 'Databricks notebooks in QA'
-             verbosity: 'Debug'
+
 
 
 
