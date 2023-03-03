@@ -1,16 +1,5 @@
 trigger:
-  branches:
-    include:
-    - main
- 
 
-  paths:
-    include:
-    - 'notebooks/*'
-    exclude:
-    - 'azure-pipelines.yml'
-
-variables:
 - group: dep-adb-demo
 - name: isDev
   value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
@@ -43,7 +32,7 @@ stages:
              vstsFeedPublish: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
              vstsFeedPackagePublish: '$(feedname-qa)'
              packagePublishDescription: 'Databricks notebooks in QA'
-             verbosity: 'Debug'
+
 
 
 
@@ -143,8 +132,7 @@ stages:
             inputs:
               command: 'download'
               vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
-              vstsFeedPackage: '$(feedname-qa)'
-              vstsPackageVersion: '*'
+: '*'
               downloadDirectory: '$(Build.SourcesDirectory)/$(publishDirectory)'
               verbosity: 'Debug'
           - powershell: |
