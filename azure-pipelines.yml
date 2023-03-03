@@ -9,12 +9,7 @@ stages:
     displayName: Building databricks notebook Artifact in Dev 
     jobs:
       
-      - job: Creating
-        displayName: "Creating Artifact in Dev"
-        
-
-        steps:
-
+ e
           - task: UniversalPackages@0
             #condition: eq(variables.isDev, true)
             displayName: "Publishing to AzDO Artifacts in Dev"
