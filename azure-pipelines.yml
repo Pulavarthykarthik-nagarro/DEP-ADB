@@ -4,8 +4,6 @@ trigger:
 - name: isDev
   value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
-pool:
-  vmImage: 'windows-latest'
 
 #########################
 #BUILD STAGE FOR ADB
