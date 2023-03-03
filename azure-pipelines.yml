@@ -1,9 +1,3 @@
-trigger:
-
-- group: dep-adb-demo
-- name: isDev
-  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
-
 
 #########################
 #BUILD STAGE FOR ADB
