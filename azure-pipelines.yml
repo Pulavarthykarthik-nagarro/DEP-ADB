@@ -5,9 +5,7 @@ trigger:
  
 
   paths:
-    include:
-    - 'notebooks/*'
-    exclude:
+
     - 'azure-pipelines.yml'
 
 variables:
