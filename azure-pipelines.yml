@@ -126,15 +126,7 @@ stages:
     dependsOn: Approve_Deployment_Prod
     # condition: and(succeeded('Approve_Deployment_Prod'),succeeded('Build_ADF_Prod'))
     condition: succeeded('Approve_Deployment_Prod')
-    jobs:
-      - job:
-        displayName: "Deploying to Prod"
-        pool:
-          vmImage: 'windows-latest'
-        # environment: daa-dev
-        # strategy:
-        #   runOnce:
-        #     deploy:
+  
         steps:
 
           - powershell: |
