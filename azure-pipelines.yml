@@ -138,15 +138,7 @@ stages:
         #   runOnce:
         #     deploy:
         steps:
-          - task: UniversalPackages@0
-            displayName: 'Downloading latest Databricks Artifact'
-            inputs:
-              command: 'download'
-              vstsFeed: 'Azure-Data-Enterprise-Platform/$(feedname-qa)'
-              vstsFeedPackage: '$(feedname-qa)'
-              vstsPackageVersion: '*'
-              downloadDirectory: '$(Build.SourcesDirectory)/$(publishDirectory)'
-              verbosity: 'Debug'
+
           - powershell: |
               tree "$(Build.SourcesDirectory)/$(publishDirectory)" /F
             displayName: 'Treeview of Build.SourcesDirectory'
