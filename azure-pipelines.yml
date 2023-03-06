@@ -154,8 +154,5 @@ stages:
             inputs:
               authMethod: 'bearer'
               bearerToken: 'dapi00c2e28a929a83abdbbb415ccbff67b0-3'
-              region: '$(region)'
-              #localPath: '$(Pipeline.Workspace)/ADB_Artifact/src'
-              localPath: '$(Build.SourcesDirectory)/$(publishDirectory)'
-              databricksPath: '/notebook'
+         '
               clean: true 
